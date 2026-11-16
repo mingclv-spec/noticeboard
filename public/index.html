@@ -53,6 +53,7 @@
 
   <div id="codebox"></div>
   <div class="count" id="count"></div>
+  <div style="margin-top:6px"><button id="usecode" class="del">Have a delete code?</button></div>
   <div id="list" style="margin-top:12px"></div>
 </div>
 
@@ -215,6 +216,23 @@ document.getElementById('send').onclick = async () => {
     await load();
   }catch(e){ err.textContent = e.message; }
   btn.disabled = false;
+};
+
+document.getElementById('usecode').onclick = async () => {
+  const id = prompt('Post ID?');
+  if (!id) return;
+  const code = prompt('Delete code?');
+  if (!code) return;
+  const res = await fetch('/api/posts/' + id.trim(), {
+    method: 'DELETE',
+    headers: { 'x-delete-code': code.trim().toUpperCase() }
+  });
+  if (res.ok){
+    codebox.style.display = 'none';
+    load();
+  } else {
+    alert('Could not delete — check the post ID and code.');
+  }
 };
 
 load();
