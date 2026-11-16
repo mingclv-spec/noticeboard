@@ -37,6 +37,10 @@ if (USE_PG) {
     addPost: async (n, b, t) => (await pool.query('INSERT INTO posts (name, body, created_at) VALUES ($1,$2,$3) RETURNING id', [n, b, t])).rows[0].id,
     addReply: async (p, n, b, t) => { await pool.query('INSERT INTO replies (post_id, name, body, created_at) VALUES ($1,$2,$3,$4)', [p, n, b, t]); },
     getPost: async (id) => (await pool.query('SELECT id FROM posts WHERE id = $1', [id])).rows[0],
+    deletePost: async (id) => {
+      await pool.query('DELETE FROM replies WHERE post_id = $1', [id]);
+      await pool.query('DELETE FROM posts WHERE id = $1', [id]);
+    },
   };
 } else {
   const { DatabaseSync } = await import('node:sqlite');
@@ -60,8 +64,15 @@ if (USE_PG) {
     addPost: async (n, b, t) => Number(q.addPost.run(n, b, t).lastInsertRowid),
     addReply: async (p, n, b, t) => { q.addReply.run(p, n, b, t); },
     getPost: async (id) => q.getPost.get(id),
+    deletePost: async (id) => {
+      db.prepare('DELETE FROM replies WHERE post_id = ?').run(id);
+      db.prepare('DELETE FROM posts WHERE id = ?').run(id);
+    },
   };
 }
+
+const ADMIN = process.env.ADMIN_TOKEN || '';
+const isAdmin = (req) => String(req.headers['x-admin-token'] || '') === ADMIN && ADMIN !== '';
 
 const hits = new Map();
 function limited(ip) {
@@ -136,6 +147,13 @@ const server = createServer(async (req, res) => {
       if (b.length < 1) return json(res, 400, { error: 'Too short.' });
       await store.addReply(postId, n, b, Date.now());
       return json(res, 201, { ok: true });
+    }
+
+    const d = url.pathname.match(/^\/api\/posts\/(\d+)$/);
+    if (req.method === 'DELETE' && d) {
+      if (!isAdmin(req)) return json(res, 403, { error: 'Forbidden.' });
+      await store.deletePost(Number(d[1]));
+      return json(res, 200, { ok: true });
     }
 
     if (url.pathname === '/healthz') return json(res, 200, { ok: true, db: USE_PG ? 'postgres' : 'sqlite' });

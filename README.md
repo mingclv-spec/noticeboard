@@ -12,6 +12,17 @@ A minimal public noticeboard: anyone can post a question, anyone can reply.
 npm start          # http://localhost:8787  (SQLite)
 ```
 
+## Removing posts
+
+Set `ADMIN_TOKEN` and send it as a header:
+
+```bash
+curl -X DELETE https://your-app.onrender.com/api/posts/<id> \
+  -H "x-admin-token: $ADMIN_TOKEN"
+```
+
+Locally the token is stored in `.admin-token` (gitignored).
+
 ## Deploy on Render
 
 1. Push this repo to GitHub
