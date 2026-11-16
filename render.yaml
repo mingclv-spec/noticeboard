@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: noticeboard
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /healthz
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: noticeboard-db
+          property: connectionString
+      - key: NODE_VERSION
+        value: 22.11.0
+
+databases:
+  - name: noticeboard-db
+    plan: free
+    databaseName: noticeboard
+    user: noticeboard

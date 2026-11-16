@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>留言板 · Noticeboard</title>
+<style>
+  :root{--bg:#0f1115;--card:#171a21;--line:#252a35;--fg:#e7eaf0;--muted:#8b93a7;--accent:#4f8cff}
+  @media (prefers-color-scheme: light){:root{--bg:#f5f6f8;--card:#fff;--line:#e4e7ee;--fg:#1b1f27;--muted:#6b7385;--accent:#2f6fed}}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif}
+  .wrap{max-width:720px;margin:0 auto;padding:24px 16px 64px}
+  header h1{font-size:22px;margin:0 0 4px}
+  header p{margin:0 0 20px;color:var(--muted);font-size:14px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin:0 0 14px}
+  input,textarea,button{font:inherit}
+  input,textarea{width:100%;background:transparent;border:1px solid var(--line);border-radius:10px;padding:10px 12px;color:var(--fg);margin:0 0 10px;outline:none}
+  input:focus,textarea:focus{border-color:var(--accent)}
+  textarea{min-height:84px;resize:vertical}
+  button{background:var(--accent);color:#fff;border:0;border-radius:10px;padding:10px 18px;cursor:pointer}
+  button:disabled{opacity:.5;cursor:default}
+  .post{margin:0 0 14px}
+  .meta{display:flex;gap:8px;align-items:baseline;color:var(--muted);font-size:13px;margin-bottom:6px}
+  .name{color:var(--fg);font-weight:600;font-size:14px}
+  .body{white-space:pre-wrap;word-break:break-word}
+  .replies{margin-top:12px;padding-left:12px;border-left:2px solid var(--line)}
+  .reply{margin:8px 0}
+  .reply .body{font-size:15px}
+  .replybox{display:flex;gap:8px;margin-top:10px}
+  .replybox input{margin:0}
+  .replybox button{padding:8px 14px;white-space:nowrap}
+  .empty{color:var(--muted);text-align:center;padding:28px 0}
+  .err{color:#ff6b6b;font-size:14px;margin:6px 0 0}
+  .count{color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>留言板</h1>
+    <p>公开的，谁都能发问、谁都能回答。请文明发言。</p>
+  </header>
+
+  <div class="card">
+    <input id="name" maxlength="40" placeholder="你的名字（可不填）">
+    <textarea id="body" maxlength="2000" placeholder="想问什么？或者分享点什么…"></textarea>
+    <button id="send">发布</button>
+    <div class="err" id="err"></div>
+  </div>
+
+  <div class="count" id="count"></div>
+  <div id="list" style="margin-top:12px"></div>
+</div>
+
+<script>
+const list = document.getElementById('list');
+const err = document.getElementById('err');
+const count = document.getElementById('count');
+
+function esc(s){ return s; }
+
+function fmt(ts){
+  const d = new Date(ts);
+  const now = Date.now();
+  const diff = Math.floor((now - ts)/1000);
+  if (diff < 60) return '刚刚';
+  if (diff < 3600) return Math.floor(diff/60) + ' 分钟前';
+  if (diff < 86400) return Math.floor(diff/3600) + ' 小时前';
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0') + ' ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+}
+
+function render(posts){
+  list.textContent = '';
+  count.textContent = posts.length ? posts.length + ' 条帖子' : '';
+  if (!posts.length){
+    const e = document.createElement('div');
+    e.className = 'empty';
+    e.textContent = '还没有人发帖，来做第一个吧。';
+    list.appendChild(e);
+    return;
+  }
+  for (const p of posts){
+    const card = document.createElement('div');
+    card.className = 'card post';
+
+    const meta = document.createElement('div');
+    meta.className = 'meta';
+    const nm = document.createElement('span');
+    nm.className = 'name';
+    nm.textContent = p.name;
+    const tm = document.createElement('span');
+    tm.textContent = fmt(p.created_at);
+    meta.append(nm, tm);
+
+    const body = document.createElement('div');
+    body.className = 'body';
+    body.textContent = p.body;
+
+    card.append(meta, body);
+
+    if (p.replies && p.replies.length){
+      const box = document.createElement('div');
+      box.className = 'replies';
+      for (const r of p.replies){
+        const rw = document.createElement('div');
+        rw.className = 'reply';
+        const rm = document.createElement('div');
+        rm.className = 'meta';
+        const rn = document.createElement('span');
+        rn.className = 'name';
+        rn.textContent = r.name;
+        const rt = document.createElement('span');
+        rt.textContent = fmt(r.created_at);
+        rm.append(rn, rt);
+        const rb = document.createElement('div');
+        rb.className = 'body';
+        rb.textContent = r.body;
+        rw.append(rm, rb);
+        box.appendChild(rw);
+      }
+      card.appendChild(box);
+    }
+
+    const form = document.createElement('div');
+    form.className = 'replybox';
+    const input = document.createElement('input');
+    input.placeholder = '写下你的回答…';
+    input.maxLength = 2000;
+    const btn = document.createElement('button');
+    btn.textContent = '回复';
+    btn.onclick = async () => {
+      const text = input.value.trim();
+      if (!text) return;
+      btn.disabled = true;
+      try{
+        const res = await fetch('/api/posts/' + p.id + '/replies', {
+          method:'POST', headers:{'content-type':'application/json'},
+          body: JSON.stringify({ name: document.getElementById('name').value, body: text })
+        });
+        if (!res.ok){ const j = await res.json().catch(()=>({})); throw new Error(j.error || '发送失败'); }
+        input.value = '';
+        await load();
+      }catch(e){ alert(e.message); }
+      btn.disabled = false;
+    };
+    input.addEventListener('keydown', (e)=>{ if (e.key === 'Enter'){ e.preventDefault(); btn.click(); } });
+    form.append(input, btn);
+    card.appendChild(form);
+
+    list.appendChild(card);
+  }
+}
+
+async function load(){
+  try{
+    const res = await fetch('/api/posts', { cache:'no-store' });
+    const j = await res.json();
+    render(j.posts || []);
+  }catch(e){ /* ignore */ }
+}
+
+document.getElementById('send').onclick = async () => {
+  err.textContent = '';
+  const body = document.getElementById('body').value.trim();
+  if (body.length < 2){ err.textContent = '内容太短了。'; return; }
+  const btn = document.getElementById('send');
+  btn.disabled = true;
+  try{
+    const res = await fetch('/api/posts', {
+      method:'POST', headers:{'content-type':'application/json'},
+      body: JSON.stringify({ name: document.getElementById('name').value, body })
+    });
+    if (!res.ok){ const j = await res.json().catch(()=>({})); throw new Error(j.error || '发送失败'); }
+    document.getElementById('body').value = '';
+    await load();
+  }catch(e){ err.textContent = e.message; }
+  btn.disabled = false;
+};
+
+load();
+setInterval(load, 15000);
+</script>
+</body>
+</html>
