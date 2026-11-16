@@ -30,6 +30,9 @@
   .replybox input{margin:0}
   .replybox button{padding:8px 14px;white-space:nowrap}
   .empty{color:var(--muted);text-align:center;padding:28px 0}
+  .del{background:transparent;border:0;color:var(--muted);padding:0 2px;font-size:12px;cursor:pointer;text-decoration:underline;width:auto}
+  #codebox{display:none;background:var(--card);border:1px solid var(--accent);border-radius:10px;padding:12px;margin:0 0 14px;font-size:14px}
+  #codebox b{color:var(--fg);letter-spacing:2px;font-size:16px}
   .err{color:#ff6b6b;font-size:14px;margin:6px 0 0}
   .count{color:var(--muted);font-size:13px}
 </style>
@@ -48,6 +51,7 @@
     <div class="err" id="err"></div>
   </div>
 
+  <div id="codebox"></div>
   <div class="count" id="count"></div>
   <div id="list" style="margin-top:12px"></div>
 </div>
@@ -56,6 +60,24 @@
 const list = document.getElementById('list');
 const err = document.getElementById('err');
 const count = document.getElementById('count');
+const codebox = document.getElementById('codebox');
+let CODES = {};
+try { CODES = JSON.parse(localStorage.getItem('nb_codes') || '{}') || {}; } catch(e){ CODES = {}; }
+function saveCode(id, code){
+  CODES[id] = code;
+  localStorage.setItem('nb_codes', JSON.stringify(CODES));
+  codebox.style.display = 'block';
+  codebox.textContent = '';
+  const t = document.createElement('div');
+  t.textContent = 'Your delete code for post #' + id + ': ';
+  const b = document.createElement('b');
+  b.textContent = code;
+  const hint = document.createElement('div');
+  hint.style.marginTop = '6px';
+  hint.style.color = 'var(--muted)';
+  hint.textContent = 'Saved on this device. Keep it — you need it to delete the post from another device.';
+  codebox.append(t, b, hint);
+}
 
 function fmt(ts){
   const d = new Date(ts);
@@ -89,6 +111,24 @@ function render(posts){
     const tm = document.createElement('span');
     tm.textContent = fmt(p.created_at);
     meta.append(nm, tm);
+    if (CODES[p.id]){
+      const del = document.createElement('button');
+      del.className = 'del';
+      del.textContent = 'Delete';
+      del.onclick = async () => {
+        if (!confirm('Delete this post?')) return;
+        const res = await fetch('/api/posts/' + p.id, { method:'DELETE', headers:{ 'x-delete-code': CODES[p.id] } });
+        if (res.ok){
+          delete CODES[p.id];
+          localStorage.setItem('nb_codes', JSON.stringify(CODES));
+          codebox.style.display = 'none';
+          load();
+        } else {
+          alert('Could not delete this post.');
+        }
+      };
+      meta.appendChild(del);
+    }
 
     const body = document.createElement('div');
     body.className = 'body';
@@ -169,6 +209,8 @@ document.getElementById('send').onclick = async () => {
       body: JSON.stringify({ name: document.getElementById('name').value, body })
     });
     if (!res.ok){ const j = await res.json().catch(()=>({})); throw new Error(j.error || 'Failed to send'); }
+    const j = await res.json().catch(()=>({}));
+    if (j.id && j.delete_code) saveCode(j.id, j.delete_code);
     document.getElementById('body').value = '';
     await load();
   }catch(e){ err.textContent = e.message; }
