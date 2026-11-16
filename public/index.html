@@ -1,14 +1,14 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>留言板 · Noticeboard</title>
+<title>Noticeboard</title>
 <style>
   :root{--bg:#0f1115;--card:#171a21;--line:#252a35;--fg:#e7eaf0;--muted:#8b93a7;--accent:#4f8cff}
   @media (prefers-color-scheme: light){:root{--bg:#f5f6f8;--card:#fff;--line:#e4e7ee;--fg:#1b1f27;--muted:#6b7385;--accent:#2f6fed}}
   *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif}
+  body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
   .wrap{max-width:720px;margin:0 auto;padding:24px 16px 64px}
   header h1{font-size:22px;margin:0 0 4px}
   header p{margin:0 0 20px;color:var(--muted);font-size:14px}
@@ -37,14 +37,14 @@
 <body>
 <div class="wrap">
   <header>
-    <h1>留言板</h1>
-    <p>公开的，谁都能发问、谁都能回答。请文明发言。</p>
+    <h1>Noticeboard</h1>
+    <p>A public board — anyone can ask, anyone can answer. Please keep it civil.</p>
   </header>
 
   <div class="card">
-    <input id="name" maxlength="40" placeholder="你的名字（可不填）">
-    <textarea id="body" maxlength="2000" placeholder="想问什么？或者分享点什么…"></textarea>
-    <button id="send">发布</button>
+    <input id="name" maxlength="40" placeholder="Your name (optional)">
+    <textarea id="body" maxlength="2000" placeholder="Ask something, or share something…"></textarea>
+    <button id="send">Post</button>
     <div class="err" id="err"></div>
   </div>
 
@@ -57,25 +57,23 @@ const list = document.getElementById('list');
 const err = document.getElementById('err');
 const count = document.getElementById('count');
 
-function esc(s){ return s; }
-
 function fmt(ts){
   const d = new Date(ts);
-  const now = Date.now();
-  const diff = Math.floor((now - ts)/1000);
-  if (diff < 60) return '刚刚';
-  if (diff < 3600) return Math.floor(diff/60) + ' 分钟前';
-  if (diff < 86400) return Math.floor(diff/3600) + ' 小时前';
-  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0') + ' ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+  const diff = Math.floor((Date.now() - ts)/1000);
+  if (diff < 60) return 'just now';
+  if (diff < 3600) return Math.floor(diff/60) + ' min ago';
+  if (diff < 86400) return Math.floor(diff/3600) + ' h ago';
+  const p = (n) => String(n).padStart(2,'0');
+  return d.getFullYear() + '-' + p(d.getMonth()+1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
 }
 
 function render(posts){
   list.textContent = '';
-  count.textContent = posts.length ? posts.length + ' 条帖子' : '';
+  count.textContent = posts.length ? posts.length + (posts.length === 1 ? ' post' : ' posts') : '';
   if (!posts.length){
     const e = document.createElement('div');
     e.className = 'empty';
-    e.textContent = '还没有人发帖，来做第一个吧。';
+    e.textContent = 'No posts yet — be the first.';
     list.appendChild(e);
     return;
   }
@@ -124,10 +122,10 @@ function render(posts){
     const form = document.createElement('div');
     form.className = 'replybox';
     const input = document.createElement('input');
-    input.placeholder = '写下你的回答…';
+    input.placeholder = 'Write your answer…';
     input.maxLength = 2000;
     const btn = document.createElement('button');
-    btn.textContent = '回复';
+    btn.textContent = 'Reply';
     btn.onclick = async () => {
       const text = input.value.trim();
       if (!text) return;
@@ -137,7 +135,7 @@ function render(posts){
           method:'POST', headers:{'content-type':'application/json'},
           body: JSON.stringify({ name: document.getElementById('name').value, body: text })
         });
-        if (!res.ok){ const j = await res.json().catch(()=>({})); throw new Error(j.error || '发送失败'); }
+        if (!res.ok){ const j = await res.json().catch(()=>({})); throw new Error(j.error || 'Failed to send'); }
         input.value = '';
         await load();
       }catch(e){ alert(e.message); }
@@ -162,7 +160,7 @@ async function load(){
 document.getElementById('send').onclick = async () => {
   err.textContent = '';
   const body = document.getElementById('body').value.trim();
-  if (body.length < 2){ err.textContent = '内容太短了。'; return; }
+  if (body.length < 2){ err.textContent = 'Too short.'; return; }
   const btn = document.getElementById('send');
   btn.disabled = true;
   try{
@@ -170,7 +168,7 @@ document.getElementById('send').onclick = async () => {
       method:'POST', headers:{'content-type':'application/json'},
       body: JSON.stringify({ name: document.getElementById('name').value, body })
     });
-    if (!res.ok){ const j = await res.json().catch(()=>({})); throw new Error(j.error || '发送失败'); }
+    if (!res.ok){ const j = await res.json().catch(()=>({})); throw new Error(j.error || 'Failed to send'); }
     document.getElementById('body').value = '';
     await load();
   }catch(e){ err.textContent = e.message; }

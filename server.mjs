@@ -116,24 +116,24 @@ const server = createServer(async (req, res) => {
     }
 
     if (req.method === 'POST' && url.pathname === '/api/posts') {
-      if (limited(ip)) return json(res, 429, { error: '慢一点，休息一下再发。' });
+      if (limited(ip)) return json(res, 429, { error: 'Too fast — take a breather.' });
       const { name, body } = await readBody(req);
       const n = clean(name, 40) || '匿名';
       const b = clean(body, 2000);
-      if (b.length < 2) return json(res, 400, { error: '内容太短了。' });
+      if (b.length < 2) return json(res, 400, { error: 'Too short.' });
       const id = await store.addPost(n, b, Date.now());
       return json(res, 201, { id });
     }
 
     const m = url.pathname.match(/^\/api\/posts\/(\d+)\/replies$/);
     if (req.method === 'POST' && m) {
-      if (limited(ip)) return json(res, 429, { error: '慢一点，休息一下再发。' });
+      if (limited(ip)) return json(res, 429, { error: 'Too fast — take a breather.' });
       const postId = Number(m[1]);
-      if (!(await store.getPost(postId))) return json(res, 404, { error: '帖子不存在。' });
+      if (!(await store.getPost(postId))) return json(res, 404, { error: 'Post not found.' });
       const { name, body } = await readBody(req);
       const n = clean(name, 40) || '匿名';
       const b = clean(body, 2000);
-      if (b.length < 1) return json(res, 400, { error: '内容太短了。' });
+      if (b.length < 1) return json(res, 400, { error: 'Too short.' });
       await store.addReply(postId, n, b, Date.now());
       return json(res, 201, { ok: true });
     }
@@ -142,7 +142,7 @@ const server = createServer(async (req, res) => {
     json(res, 404, { error: 'not found' });
   } catch (err) {
     console.error(err);
-    json(res, 400, { error: '处理失败，请重试。' });
+    json(res, 400, { error: 'Something went wrong, please try again.' });
   }
 });
 
