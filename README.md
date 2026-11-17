@@ -31,6 +31,18 @@ Optional env:
 | `POST` | `/api/posts/:id/replies` | `{ name?, body }` |
 | `DELETE` | `/api/posts/:id` | send `x-delete-code` (from the post response) or `x-admin-token` |
 
+## Seeding the question list
+
+The owner's questions live in `questions.json` and are posted in that order (first item on top):
+
+```bash
+npm start                    # or a deployed URL below
+BASE_URL=https://your-app.onrender.com node seed.mjs
+
+# wipe everything first, then re-seed
+ADMIN_TOKEN=... BASE_URL=https://your-app.onrender.com node seed.mjs --clear
+```
+
 ## Removing posts
 
 Posters keep the `delete_code` they get back and send it in `x-delete-code`.
