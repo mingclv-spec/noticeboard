@@ -93,7 +93,7 @@ const server = createServer(async (req,res) => {
       const result = db.prepare('INSERT INTO predictions (market_id,name,value,comment,delete_hash,created_at) VALUES (?,?,?,?,?,?)').run(market.id,name,value,comment,hash(code),Date.now());
       return send(res,201,{id:Number(result.lastInsertRowid),delete_code:code});
     }
-    const del = url.pathname.match(/^\\/api\\/predictions\\/(\\d+)$/);
+    const del = url.pathname.match(/^\/api\/predictions\/(\d+)$/);
     if (req.method === 'DELETE' && del) {
       const row = db.prepare('SELECT id,delete_hash FROM predictions WHERE id=?').get(Number(del[1]));
       if (!row) return send(res,404,{error:'Prediction not found.'});
