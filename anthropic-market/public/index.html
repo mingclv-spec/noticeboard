@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Anthropic Price Predictions</title>
+<style>
+:root{color-scheme:dark;--bg:#0d1117;--panel:#151b23;--line:#273244;--text:#edf2f8;--muted:#98a6b8;--accent:#d97757;--green:#36b37e;--blue:#6c9eff}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#20202a 0,#0d1117 55%);color:var(--text);font:15px/1.55 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.wrap{max-width:980px;margin:auto;padding:28px 18px 64px}header{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:26px}
+.brand{display:flex;align-items:center;gap:11px;font-weight:700;letter-spacing:.2px}.mark{width:34px;height:34px;border-radius:11px;background:linear-gradient(135deg,#e58a66,#a94d3a);display:grid;place-items:center;color:white;font-weight:800}
+.tag{font-size:11px;color:#f1b99f;border:1px solid #704537;padding:5px 9px;border-radius:99px;letter-spacing:1px}.hero{margin:20px 0 18px}.eyebrow{color:var(--accent);font-size:11px;font-weight:700;letter-spacing:1.7px}
+.hero h1{font-size:clamp(27px,5vw,42px);line-height:1.13;margin:9px 0 10px;letter-spacing:-1px}.hero p{color:var(--muted);max-width:720px;margin:0}
+.panel{background:linear-gradient(160deg,#19212b,#141a22);border:1px solid var(--line);border-radius:18px;padding:20px;margin:16px 0;box-shadow:0 12px 32px #0003}
+.market-top{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}.market-top h2{font-size:22px;margin:5px 0 8px}.status{font-size:11px;color:#8fe0b8;border:1px solid #285c48;border-radius:99px;padding:5px 9px;white-space:nowrap}
+.desc{color:var(--muted);font-size:14px;max-width:740px}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:20px 0}
+.stat{background:#0f151d;border:1px solid #222e3d;border-radius:12px;padding:13px}.stat small{display:block;color:var(--muted);font-size:11px;margin-bottom:5px}.stat strong{font-size:22px;letter-spacing:-.5px}.stat strong.na{font-size:16px;color:var(--muted)}
+.columns{display:grid;grid-template-columns:1.05fr .95fr;gap:15px}.formtitle{font-size:16px;font-weight:700;margin:0 0 13px}.field{margin:10px 0}.field label{display:block;color:var(--muted);font-size:12px;margin-bottom:6px}
+input,textarea,button{font:inherit}input,textarea{width:100%;background:#0d131b;border:1px solid #303b4b;border-radius:10px;color:var(--text);padding:11px 12px;outline:none}input:focus,textarea:focus{border-color:var(--blue)}
+textarea{resize:vertical;min-height:64px}.price{font-size:24px;font-weight:700}.btn{background:linear-gradient(135deg,#e58a66,#c9674a);border:0;color:#170e0a;border-radius:10px;padding:11px 16px;font-weight:800;cursor:pointer}.btn:disabled{opacity:.5;cursor:wait}
+.hint{font-size:11px;color:var(--muted);margin-top:8px}.notice{display:none;border:1px solid #397b5c;background:#11251e;padding:12px;border-radius:10px;margin:12px 0;font-size:13px}.notice b{color:#a6f0c8;letter-spacing:1px}
+.bars{display:flex;align-items:end;gap:7px;height:145px;padding:10px 2px 0;border-bottom:1px solid var(--line)}.barcol{flex:1;min-width:0;text-align:center;height:100%;display:flex;flex-direction:column;justify-content:end;gap:5px}
+.bar{background:linear-gradient(180deg,#e58a66,#a94d3a);border-radius:6px 6px 0 0;min-height:2px}.barlabel{font-size:10px;color:var(--muted);overflow:hidden;text-overflow:ellipsis}.barcount{font-size:10px;color:#e8b29c}
+.pred{display:flex;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid #25303e}.pred:last-child{border:0}.predname{font-weight:650}.predcomment{font-size:12px;color:var(--muted);margin-top:2px}.predvalue{font-size:17px;font-weight:750;white-space:nowrap}.predtime{font-size:10px;color:var(--muted)}
+.empty{color:var(--muted);padding:25px 0;text-align:center}.foot{color:#748194;font-size:11px;text-align:center;margin-top:24px}
+@media(max-width:700px){.stats{grid-template-columns:repeat(2,1fr)}.columns{grid-template-columns:1fr}.market-top{display:block}.status{display:inline-block;margin-top:5px}header{align-items:flex-start}}
+</style>
+</head>
+<body><div class="wrap">
+<header><div class="brand"><div class="mark">A</div> Community Markets</div><div class="tag">VIRTUAL PREDICTIONS · NO MONEY</div></header>
+<section class="hero"><div class="eyebrow">AI COMPANY WATCH</div><h1>Anthropic Price Predictions</h1><p>Share your view, compare it with the crowd and see how the community forecast evolves. No accounts, no deposits and no real-money trading.</p></section>
+<section class="panel">
+<div class="market-top"><div><div class="eyebrow">OPEN PREDICTION</div><h2 id="title">Loading market…</h2><div class="desc" id="description"></div></div><div class="status" id="status">OPEN</div></div>
+<div class="stats"><div class="stat"><small>COMMUNITY PREDICTIONS</small><strong id="count">—</strong></div><div class="stat"><small>AVERAGE ESTIMATE</small><strong id="mean">—</strong></div><div class="stat"><small>MEDIAN ESTIMATE</small><strong id="median">—</strong></div><div class="stat"><small>LOW – HIGH</small><strong id="range" class="na">—</strong></div></div>
+<div class="columns"><div><h3 class="formtitle">Make your prediction</h3>
+<div class="field"><label for="name">Display name</label><input id="name" maxlength="40" placeholder="Your name or nickname (optional)"></div>
+<div class="field"><label for="value">Your estimated share price (USD)</label><input class="price" id="value" type="number" min="0.01" max="1000000" step="0.01" placeholder="e.g. 125.00"></div>
+<div class="field"><label for="comment">Why do you think so? (optional)</label><textarea id="comment" maxlength="240" placeholder="Add a short reason…"></textarea></div>
+<button class="btn" id="submit">Submit prediction</button><div class="hint">You will receive a private delete code. Keep it if you may want to remove your prediction.</div>
+<div class="notice" id="codebox">Your delete code: <b id="code"></b><br>Save this code somewhere safe.</div><div class="hint" id="error" role="status"></div></div>
+<div><h3 class="formtitle">Community forecast distribution</h3><div class="bars" id="chart"><div class="empty">No predictions yet</div></div><div class="hint">Bars show the number of community estimates in each price range.</div></div></div>
+</section>
+<section class="panel"><h3 class="formtitle">Latest predictions</h3><div id="predictions" class="empty">Loading…</div></section>
+<div class="foot">Independent community survey. Not affiliated with Anthropic. Predictions are opinions, not investment advice or offers to buy or sell securities. No money or prizes are involved.</div>
+</div>
+<script>
+const $=id=>document.getElementById(id);let codes={};try{codes=JSON.parse(localStorage.getItem('anthropic_prediction_codes')||'{}')}catch{}
+const money=n=>n==null?'—':'$'+Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const ago=t=>{const d=Math.max(0,Date.now()-Number(t));if(d<60000)return'just now';if(d<3600000)return Math.floor(d/60000)+'m ago';if(d<86400000)return Math.floor(d/3600000)+'h ago';return new Date(Number(t)).toLocaleDateString()};
+function chart(rows){const el=$('chart');el.textContent='';if(!rows.length){el.innerHTML='<div class="empty">Be the first to predict</div>';return}const vals=rows.map(x=>x.value),min=Math.min(...vals),max=Math.max(...vals),bins=Array.from({length:7},()=>0);for(const v of vals){const i=max===min?3:Math.min(6,Math.floor((v-min)/(max-min+Number.EPSILON)*7));bins[i]++}const top=Math.max(...bins,1);bins.forEach((n,i)=>{const c=document.createElement('div');c.className='barcol';const ct=document.createElement('div');ct.className='barcount';ct.textContent=n||'';const b=document.createElement('div');b.className='bar';b.style.height=(n/top*100)+'%';const l=document.createElement('div');l.className='barlabel';const lo=min+(max-min)*i/7;l.textContent=max===min?money(min):money(lo).replace('.00','')+'+';c.append(ct,b,l);el.append(c)})}
+function render(data){const m=data.market,s=data.stats,rows=data.predictions;$('title').textContent=m.title;$('description').textContent=m.description;$('status').textContent=m.status.toUpperCase();$('count').textContent=s.count;$('mean').textContent=money(s.mean);$('median').textContent=money(s.median);$('range').textContent=s.count?money(s.min)+' – '+money(s.max):'—';$('range').className=s.count?'':'na';$('submit').disabled=m.status!=='open';chart(rows);const list=$('predictions');list.textContent='';if(!rows.length){list.className='empty';list.textContent='No predictions yet. Be the first!';return}list.className='';for(const p of rows){const row=document.createElement('div');row.className='pred';const left=document.createElement('div'),name=document.createElement('div'),comment=document.createElement('div'),time=document.createElement('div'),right=document.createElement('div');name.className='predname';name.textContent=p.name;comment.className='predcomment';comment.textContent=p.comment;time.className='predtime';time.textContent=ago(p.created_at);left.append(name,comment,time);right.className='predvalue';right.textContent=money(p.value);if(codes[p.id]){const del=document.createElement('button');del.className='btn';del.style.cssText='padding:4px 8px;font-size:11px;margin-top:6px;display:block';del.textContent='Delete';del.onclick=async()=>{if(!confirm('Delete your prediction?'))return;const r=await fetch('/api/predictions/'+p.id,{method:'DELETE',headers:{'x-delete-code':codes[p.id]}});if(r.ok){delete codes[p.id];localStorage.setItem('anthropic_prediction_codes',JSON.stringify(codes));await load()}else alert('Could not delete prediction. Check your delete code.')};right.append(del)}row.append(left,right);list.append(row)}}
+async function load(){try{const r=await fetch('/api/market',{cache:'no-store'});if(!r.ok)throw Error('Could not load market');render(await r.json())}catch(e){$('error').textContent=e.message}}
+$('submit').onclick=async()=>{const btn=$('submit');$('error').textContent='';const value=Number($('value').value);if(!Number.isFinite(value)||value<=0){$('error').textContent='Please enter a valid price greater than zero.';return}btn.disabled=true;try{const r=await fetch('/api/predictions',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({name:$('name').value,value,comment:$('comment').value})});const j=await r.json();if(!r.ok)throw Error(j.error||'Submission failed');codes[j.id]=j.delete_code;localStorage.setItem('anthropic_prediction_codes',JSON.stringify(codes));$('code').textContent=j.delete_code;$('codebox').style.display='block';$('value').value='';$('comment').value='';await load()}catch(e){$('error').textContent=e.message}finally{btn.disabled=false}};
+load();setInterval(load,15000);
+</script></body></html>
