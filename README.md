@@ -4,6 +4,7 @@ A minimal public noticeboard: anyone can post, anyone can reply. No accounts, no
 
 - Zero-dependency frontend (single static HTML page, auto-refresh every 15s)
 - Node.js server, dual storage: PostgreSQL when `DATABASE_URL` is set, otherwise local SQLite (`node:sqlite`)
+- **Private replies**: reply bodies are only served to clients that unlocked with the reply password; without it the API returns just a reply count
 - Per-post delete codes (anyone who posts gets a code to remove their own post) plus an admin token for the owner
 - Limits: one post/reply up to 2000 chars, 20 writes per IP per 5 minutes
 - Deploy target: Render (see `render.yaml`)
@@ -21,15 +22,25 @@ Optional env:
 | `PORT` | Port to listen on (default `8787`) |
 | `DATABASE_URL` | Postgres connection string; set it to use Postgres instead of SQLite |
 | `ADMIN_TOKEN` | Enables `x-admin-token` deletion without a delete code |
+| `REPLY_PASSWORD` | Password that unlocks reading/writing replies. If unset, `.reply-password` is used; if that is missing a random one is generated and saved there |
 
 ## API
 
 | Method | Path | Notes |
 | --- | --- | --- |
-| `GET` | `/api/posts` | All posts with replies, newest first |
+| `GET` | `/api/posts` | All posts, newest first. `replies` is populated only when unlocked, plus `reply_count` and `unlocked` |
+| `GET` | `/api/session` | `{ unlocked }` for the current cookie |
+| `POST` | `/api/unlock` | `{ password }` → sets an HttpOnly cookie (14 days) |
+| `POST` | `/api/lock` | Clears the cookie |
 | `POST` | `/api/posts` | `{ name?, body }` → `201 { id, delete_code }` |
-| `POST` | `/api/posts/:id/replies` | `{ name?, body }` |
+| `POST` | `/api/posts/:id/replies` | `{ name?, body }` — requires the unlock cookie, otherwise `401` |
 | `DELETE` | `/api/posts/:id` | send `x-delete-code` (from the post response) or `x-admin-token` |
+
+## Private replies
+
+Replies are gated by one shared password. The browser calls `POST /api/unlock`; the server replies with an HttpOnly cookie derived from the password, and only then does `/api/posts` include reply bodies. Rate limit: 10 password attempts per 10 minutes per IP.
+
+`curl -X POST https://your-app/api/unlock -H 'content-type: application/json' -d '{"password":"..."}' -c cookies.txt`
 
 ## Removing posts
 
