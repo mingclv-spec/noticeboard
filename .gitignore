@@ -2,4 +2,3 @@ node_modules/
 data/
 *.log
 .admin-token
-.reply-password

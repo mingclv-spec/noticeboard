@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Noticeboard</title>
 <style>
-  :root{--bg:#0f1115;--card:#171a21;--line:#252a35;--fg:#e7eaf0;--muted:#8b93a7;--accent:#4f8cff;--lock:#f0b429}
-  @media (prefers-color-scheme: light){:root{--bg:#f5f6f8;--card:#fff;--line:#e4e7ee;--fg:#1b1f27;--muted:#6b7385;--accent:#2f6fed;--lock:#b7791f}}
+  :root{--bg:#0f1115;--card:#171a21;--line:#252a35;--fg:#e7eaf0;--muted:#8b93a7;--accent:#4f8cff}
+  @media (prefers-color-scheme: light){:root{--bg:#f5f6f8;--card:#fff;--line:#e4e7ee;--fg:#1b1f27;--muted:#6b7385;--accent:#2f6fed}}
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
   .wrap{max-width:720px;margin:0 auto;padding:24px 16px 64px}
@@ -35,27 +35,14 @@
   #codebox b{color:var(--fg);letter-spacing:2px;font-size:16px}
   .err{color:#ff6b6b;font-size:14px;margin:6px 0 0}
   .count{color:var(--muted);font-size:13px}
-  .lockbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-  .lockbar input{flex:1;min-width:160px;margin:0}
-  .lockbar button{white-space:nowrap}
-  .locknote{color:var(--muted);font-size:13px;margin:0 0 10px}
-  .lockedreplies{display:flex;gap:6px;align-items:center;color:var(--lock);font-size:13px;margin-top:10px;background:transparent;border:1px dashed var(--line);border-radius:8px;padding:6px 10px;width:100%;text-align:left;cursor:pointer}
-  .lockedreplies:hover{border-color:var(--lock)}
-  .badge{display:inline-flex;gap:6px;align-items:center;font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 10px}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
     <h1>Noticeboard</h1>
-    <p>Anyone can post a question. Replies are private — you need the password to read or write them.</p>
+    <p>A public board — anyone can ask, anyone can answer. Please keep it civil.</p>
   </header>
-
-  <div class="card" id="lockcard">
-    <div class="locknote" id="locknote"></div>
-    <div class="lockbar" id="lockbar"></div>
-    <div class="err" id="lockerr"></div>
-  </div>
 
   <div class="card">
     <input id="name" maxlength="40" placeholder="Your name (optional)">
@@ -75,15 +62,8 @@ const list = document.getElementById('list');
 const err = document.getElementById('err');
 const count = document.getElementById('count');
 const codebox = document.getElementById('codebox');
-const lockbar = document.getElementById('lockbar');
-const locknote = document.getElementById('locknote');
-const lockerr = document.getElementById('lockerr');
-
-let UNLOCKED = false;
-let POSTS = [];
 let CODES = {};
 try { CODES = JSON.parse(localStorage.getItem('nb_codes') || '{}') || {}; } catch(e){ CODES = {}; }
-
 function saveCode(id, code){
   CODES[id] = code;
   localStorage.setItem('nb_codes', JSON.stringify(CODES));
@@ -108,77 +88,6 @@ function fmt(ts){
   if (diff < 86400) return Math.floor(diff/3600) + ' h ago';
   const p = (n) => String(n).padStart(2,'0');
   return d.getFullYear() + '-' + p(d.getMonth()+1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
-}
-
-function renderLockBar(){
-  lockbar.textContent = '';
-  lockerr.textContent = '';
-  if (UNLOCKED){
-    locknote.textContent = 'Replies are unlocked in this browser.';
-    const btn = document.createElement('button');
-    btn.textContent = 'Lock again';
-    btn.style.background = 'transparent';
-    btn.style.color = 'var(--muted)';
-    btn.style.border = '1px solid var(--line)';
-    btn.onclick = async () => {
-      await fetch('/api/lock', { method:'POST' });
-      UNLOCKED = false;
-      renderLockBar();
-      await load();
-    };
-    const badge = document.createElement('span');
-    badge.className = 'badge';
-    badge.textContent = '🔓 Unlocked';
-    lockbar.append(badge, btn);
-    return;
-  }
-  locknote.textContent = 'Enter the reply password to read and write replies.';
-  const input = document.createElement('input');
-  input.type = 'password';
-  input.placeholder = 'Reply password';
-  input.autocomplete = 'current-password';
-  const btn = document.createElement('button');
-  btn.textContent = 'Unlock';
-  const submit = async () => {
-    const password = input.value;
-    if (!password) return;
-    btn.disabled = true;
-    lockerr.textContent = '';
-    try{
-      const res = await fetch('/api/unlock', {
-        method:'POST', headers:{'content-type':'application/json'},
-        body: JSON.stringify({ password })
-      });
-      const j = await res.json().catch(()=>({}));
-      if (!res.ok) throw new Error(j.error || 'Wrong password.');
-      UNLOCKED = true;
-      input.value = '';
-      renderLockBar();
-      await load();
-    }catch(e){ lockerr.textContent = e.message; }
-    btn.disabled = false;
-  };
-  btn.onclick = submit;
-  input.addEventListener('keydown', (e)=>{ if (e.key === 'Enter'){ e.preventDefault(); submit(); } });
-  lockbar.append(input, btn);
-}
-
-function replyRow(r){
-  const rw = document.createElement('div');
-  rw.className = 'reply';
-  const rm = document.createElement('div');
-  rm.className = 'meta';
-  const rn = document.createElement('span');
-  rn.className = 'name';
-  rn.textContent = r.name;
-  const rt = document.createElement('span');
-  rt.textContent = fmt(r.created_at);
-  rm.append(rn, rt);
-  const rb = document.createElement('div');
-  rb.className = 'body';
-  rb.textContent = r.body;
-  rw.append(rm, rb);
-  return rw;
 }
 
 function render(posts){
@@ -228,28 +137,26 @@ function render(posts){
 
     card.append(meta, body);
 
-    const n = p.reply_count || 0;
-
-    if (!UNLOCKED){
-      const lr = document.createElement('button');
-      lr.className = 'lockedreplies';
-      lr.textContent = n
-        ? '🔒 ' + n + (n === 1 ? ' reply' : ' replies') + ' — password required'
-        : '🔒 Replies are private';
-      lr.onclick = () => {
-        const input = lockbar.querySelector('input');
-        if (input) input.focus();
-        document.getElementById('lockcard').scrollIntoView({ behavior:'smooth', block:'center' });
-      };
-      card.appendChild(lr);
-      list.appendChild(card);
-      continue;
-    }
-
-    if (n > 0){
+    if (p.replies && p.replies.length){
       const box = document.createElement('div');
       box.className = 'replies';
-      for (const r of (p.replies || [])) box.appendChild(replyRow(r));
+      for (const r of p.replies){
+        const rw = document.createElement('div');
+        rw.className = 'reply';
+        const rm = document.createElement('div');
+        rm.className = 'meta';
+        const rn = document.createElement('span');
+        rn.className = 'name';
+        rn.textContent = r.name;
+        const rt = document.createElement('span');
+        rt.textContent = fmt(r.created_at);
+        rm.append(rn, rt);
+        const rb = document.createElement('div');
+        rb.className = 'body';
+        rb.textContent = r.body;
+        rw.append(rm, rb);
+        box.appendChild(rw);
+      }
       card.appendChild(box);
     }
 
@@ -287,10 +194,7 @@ async function load(){
   try{
     const res = await fetch('/api/posts', { cache:'no-store' });
     const j = await res.json();
-    UNLOCKED = !!j.unlocked;
-    POSTS = j.posts || [];
-    renderLockBar();
-    render(POSTS);
+    render(j.posts || []);
   }catch(e){ /* ignore */ }
 }
 
@@ -332,7 +236,7 @@ document.getElementById('usecode').onclick = async () => {
 };
 
 load();
-setInterval(() => { if (document.visibilityState === 'visible') load(); }, 15000);
+setInterval(load, 15000);
 </script>
 </body>
 </html>
